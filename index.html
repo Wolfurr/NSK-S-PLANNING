@@ -2,89 +2,239 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#0f1115">
-<title>Dispo Squad</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#070a18">
+<title>NSK Squad Planning</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎮</text></svg>">
 <style>
   :root{
-    --bg:#0f1115; --card:#181b22; --card2:#1f232c; --line:#2a2f3a;
-    --text:#e8eaf0; --muted:#8b93a4;
-    --yes:#2ecc71; --maybe:#f5b83d; --no:#e5535d; --accent:#7c8cff;
-    --radius:16px;
-  }
-  @media (prefers-color-scheme: light){
-    :root{ --bg:#f4f5f8; --card:#fff; --card2:#f0f2f6; --line:#e1e4ec; --text:#171a21; --muted:#6a7285; }
+    --text:#f4f6ff; --muted:rgba(232,236,255,.62);
+    --yes:#34e08a; --maybe:#ffc247; --no:#ff5a6a; --accent:#8f9bff;
+    --line:rgba(255,255,255,.16);
   }
   *{box-sizing:border-box;margin:0}
-  body{background:var(--bg);color:var(--text);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100vh;padding-bottom:60px}
-  .wrap{max-width:980px;margin:0 auto;padding:0 16px}
-  header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:22px 0 14px;flex-wrap:wrap}
-  h1{font-size:1.5rem;letter-spacing:-.02em}
-  h1 span{color:var(--accent)}
-  .me{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);padding:6px 8px 6px 6px;border-radius:999px;cursor:pointer;font-size:.9rem}
-  .me:hover{border-color:var(--accent)}
-  .avatar{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:.8rem;color:#fff;flex:none}
-  .banner{background:var(--card2);border:1px dashed var(--line);color:var(--muted);padding:10px 14px;border-radius:12px;font-size:.85rem;margin-bottom:14px}
-  .legend{display:flex;gap:14px;color:var(--muted);font-size:.85rem;margin:2px 0 16px;flex-wrap:wrap}
-  .week-title{font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:22px 0 10px}
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
-  .day{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;display:flex;flex-direction:column;gap:12px;transition:border-color .2s, transform .2s}
-  .day.today{border-color:var(--accent)}
-  .day.best{border-color:var(--yes);box-shadow:0 0 0 1px var(--yes) inset, 0 6px 24px -10px var(--yes)}
-  .day.past{opacity:.5}
-  .day-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
-  .day-name{font-weight:700;text-transform:capitalize}
-  .day-sub{font-size:.8rem;color:var(--muted)}
-  .badge{font-size:.78rem;padding:3px 9px;border-radius:999px;background:var(--card2);color:var(--muted);white-space:nowrap}
-  .badge.good{background:rgba(46,204,113,.15);color:var(--yes);font-weight:600}
-  .actions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-  .btn{border:1px solid var(--line);background:var(--card2);color:var(--text);padding:10px 6px;border-radius:12px;font:inherit;font-size:.85rem;cursor:pointer;transition:all .15s}
-  .btn:hover{border-color:var(--muted)}
-  .btn:active{transform:scale(.97)}
-  .btn.on.yes{background:var(--yes);border-color:var(--yes);color:#0b2a17;font-weight:700}
-  .btn.on.maybe{background:var(--maybe);border-color:var(--maybe);color:#2e2000;font-weight:700}
-  .btn.on.no{background:var(--no);border-color:var(--no);color:#fff;font-weight:700}
-  .people{display:flex;flex-wrap:wrap;gap:6px;min-height:28px}
-  .chip{display:flex;align-items:center;gap:5px;font-size:.8rem;padding:2px 9px 2px 3px;border-radius:999px;background:var(--card2);border:1px solid var(--line)}
-  .chip .avatar{width:20px;height:20px;font-size:.65rem}
-  .chip.yes{border-color:var(--yes)} .chip.maybe{border-color:var(--maybe);opacity:.9} .chip.no{opacity:.45;text-decoration:line-through}
-  .empty{color:var(--muted);font-size:.82rem;align-self:center}
-  .game{width:100%;background:transparent;border:1px solid var(--line);border-radius:10px;color:var(--text);padding:8px 10px;font:inherit;font-size:.85rem}
-  .game:focus{outline:none;border-color:var(--accent)}
-  .game::placeholder{color:var(--muted)}
-  /* modal */
-  .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;place-items:center;padding:20px;z-index:10}
-  .modal.open{display:grid}
-  .box{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:24px;width:100%;max-width:360px;display:flex;flex-direction:column;gap:14px}
-  .box h2{font-size:1.2rem}
-  .box p{color:var(--muted);font-size:.9rem}
-  .box input{background:var(--card2);border:1px solid var(--line);border-radius:12px;color:var(--text);padding:12px 14px;font:inherit}
-  .box input:focus{outline:none;border-color:var(--accent)}
-  .primary{background:var(--accent);color:#fff;border:0;padding:12px;border-radius:12px;font:inherit;font-weight:700;cursor:pointer}
-  .link{background:none;border:0;color:var(--muted);cursor:pointer;font:inherit;font-size:.85rem}
+  html{-webkit-text-size-adjust:100%}
+  body{min-height:100vh;color:var(--text);background:#070a18;
+    font:15px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Inter,Roboto,sans-serif;
+    overflow-x:hidden;padding-bottom:calc(60px + env(safe-area-inset-bottom))}
+  button{font:inherit;color:inherit;cursor:pointer}
+
+  /* ---------- fond coloré (c'est lui qui fait vivre le verre) ---------- */
+  .bg{position:fixed;inset:0;z-index:-1;overflow:hidden;background:
+      radial-gradient(120% 90% at 50% 0%, #121638 0%, #070a18 70%)}
+  .blob{position:absolute;border-radius:50%;filter:blur(70px);opacity:.8;animation:float 24s ease-in-out infinite alternate}
+  .b1{width:46vmax;height:46vmax;background:#5b4dff;left:-14vmax;top:-16vmax}
+  .b2{width:40vmax;height:40vmax;background:#10b5d8;right:-12vmax;top:6vmax;animation-delay:-7s}
+  .b3{width:44vmax;height:44vmax;background:#ff4f9a;left:22vmax;bottom:-26vmax;opacity:.5;animation-delay:-13s}
+  @keyframes float{to{transform:translate(7vmax,5vmax) scale(1.12)}}
+
+  /* ---------- liquid glass ---------- */
+  .glass{
+    position:relative;overflow:hidden;
+    background:linear-gradient(135deg,rgba(255,255,255,.16),rgba(255,255,255,.04));
+    -webkit-backdrop-filter:blur(26px) saturate(180%);backdrop-filter:blur(26px) saturate(180%);
+    border:1px solid var(--line);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.38),inset 0 -1px 0 rgba(255,255,255,.06),
+               inset 0 0 22px rgba(255,255,255,.04),0 14px 40px -14px rgba(0,0,0,.65);
+  }
+  .glass::before{content:"";position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(120% 70% at 0% 0%,rgba(255,255,255,.2),transparent 55%)}
+  @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+    .glass{background:rgba(30,34,66,.92)}
+  }
+
+  .wrap{max-width:1240px;margin:0 auto;padding:0 16px}
+
+  /* ---------- en-tête ---------- */
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:24px 0 14px;flex-wrap:wrap}
+  h1{font-size:1.75rem;font-weight:800;letter-spacing:-.035em}
+  h1 span{background:linear-gradient(90deg,#a3adff,#5ee7ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .mychip{display:flex;align-items:center;gap:8px;padding:6px 12px 6px 6px;border-radius:999px;font-size:.9rem;cursor:pointer;border:1px solid var(--line)}
+  .mychip:hover{border-color:rgba(255,255,255,.4)}
+  .banner{padding:10px 14px;border-radius:14px;font-size:.85rem;color:var(--muted);margin-bottom:14px;border:1px dashed var(--line);background:rgba(255,255,255,.05)}
+
+  /* ---------- avatars / états ---------- */
+  .face{position:relative;flex:none;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;
+    font-size:11px;font-weight:700;color:#fff;background:linear-gradient(145deg,var(--c),color-mix(in srgb,var(--c) 65%,#000));
+    box-shadow:inset 0 1px 1px rgba(255,255,255,.55),0 1px 4px rgba(0,0,0,.35);transition:transform .2s}
+  .face.big{width:32px;height:32px;font-size:13px}
+  .face.yes{box-shadow:inset 0 1px 1px rgba(255,255,255,.55),0 0 0 2px var(--yes),0 0 12px rgba(52,224,138,.6)}
+  .face.maybe{box-shadow:inset 0 1px 1px rgba(255,255,255,.55),0 0 0 2px var(--maybe)}
+  .face.no{filter:grayscale(1);opacity:.5}
+  .face.no::after{content:"✕";position:absolute;right:-4px;bottom:-4px;width:12px;height:12px;border-radius:50%;
+    background:var(--no);color:#fff;font-size:8px;display:grid;place-items:center;filter:none}
+  .face.none{background:transparent;box-shadow:none;border:1.5px dashed rgba(255,255,255,.32);color:rgba(255,255,255,.45)}
+  .face.has-note::before{content:"";position:absolute;top:-3px;right:-3px;width:8px;height:8px;border-radius:50%;
+    background:#fff;box-shadow:0 0 0 2px rgba(20,24,50,.8);z-index:1}
+  .face.me{outline:2px solid rgba(255,255,255,.9);outline-offset:1px}
+
+  /* ---------- barre semaine ---------- */
+  .toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+  .nav{display:flex;align-items:center;gap:4px;padding:5px;border-radius:999px}
+  .nav button{border:0;background:transparent;width:36px;height:36px;border-radius:50%;font-size:1.1rem;display:grid;place-items:center}
+  .nav button:hover:not(:disabled){background:rgba(255,255,255,.14)}
+  .nav button:disabled{opacity:.3;cursor:default}
+  .nav .lbl{padding:0 10px;text-align:center;min-width:150px;position:relative;z-index:1}
+  .nav .lbl b{display:block;font-size:.95rem}
+  .nav .lbl small{color:var(--muted);font-size:.72rem}
+  .today-btn{border:1px solid var(--line);background:rgba(255,255,255,.08);padding:8px 14px;border-radius:999px;font-size:.85rem}
+  .today-btn:hover{background:rgba(255,255,255,.16)}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:.78rem;align-items:center}
+  .legend span{display:flex;align-items:center;gap:6px}
+  .legend .face{width:16px;height:16px;font-size:0}
+  .legend .face.no::after{width:9px;height:9px;font-size:6px;right:-3px;bottom:-3px}
+
+  /* ---------- hero : meilleur créneau ---------- */
+  .hero{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:16px 18px;border-radius:24px;margin-bottom:16px;cursor:pointer}
+  .hero.good{border-color:rgba(52,224,138,.55);box-shadow:inset 0 1px 0 rgba(255,255,255,.38),0 0 36px -8px rgba(52,224,138,.45),0 14px 40px -14px rgba(0,0,0,.65)}
+  .hero small{color:var(--muted);font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;position:relative;z-index:1}
+  .hero h2{font-size:1.2rem;letter-spacing:-.02em;position:relative;z-index:1}
+  .hero p{color:var(--muted);font-size:.88rem;position:relative;z-index:1}
+  .hero .faces{display:flex;gap:5px;flex-wrap:wrap;position:relative;z-index:1}
+
+  /* ---------- calendrier ---------- */
+  .week{display:grid;grid-template-columns:1fr;gap:12px}
+  @media (min-width:640px){.week{grid-template-columns:repeat(2,1fr)}}
+  @media (min-width:980px){.week{grid-template-columns:repeat(7,1fr);gap:10px}}
+  .day{border-radius:24px;padding:12px}
+  .day.today{border-color:rgba(143,155,255,.8);box-shadow:inset 0 1px 0 rgba(255,255,255,.38),0 0 0 1px rgba(143,155,255,.5),0 14px 40px -14px rgba(0,0,0,.65)}
+  .day.past{opacity:.38}
+  .day.past .slot{pointer-events:none}
+  .day-head{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;margin-bottom:10px;position:relative;z-index:1}
+  .dow{text-transform:uppercase;font-size:.72rem;letter-spacing:.08em;color:var(--muted);font-weight:600}
+  .dom{font-size:1.35rem;font-weight:800;letter-spacing:-.03em;padding:0 6px;border-radius:10px}
+  .day.today .dom{background:var(--accent);color:#0b0e2a}
+  .mon{font-size:.75rem;color:var(--muted)}
+  .game-line{flex-basis:100%;font-size:.75rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .slots{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;position:relative;z-index:1}
+  @media (min-width:980px){.slots{display:flex;flex-direction:column}}
+
+  .slot{border-radius:16px;padding:9px;cursor:pointer;display:flex;flex-direction:column;gap:7px;min-height:96px;
+    background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.13);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.18);transition:transform .15s,background .15s,box-shadow .2s,border-color .2s}
+  .slot:hover{background:rgba(255,255,255,.13);transform:translateY(-1px)}
+  .slot:focus-visible{outline:2px solid var(--accent)}
+  .slot.best{border-color:rgba(52,224,138,.75);background:rgba(52,224,138,.13);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 0 22px rgba(52,224,138,.35)}
+  .slot-top{display:flex;justify-content:space-between;align-items:center;gap:4px}
+  .sname{font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600}
+  .count{font-size:.78rem;font-weight:700;white-space:nowrap}
+  .slot.best .count{color:var(--yes)}
+  .faces{display:flex;flex-wrap:wrap;gap:5px;align-content:flex-start;flex:1}
+  .bar{display:flex;height:4px;border-radius:4px;overflow:hidden;background:rgba(255,255,255,.1)}
+  .bar i{display:block;height:100%}
+  .bar .y{background:var(--yes)} .bar .m{background:var(--maybe)} .bar .n{background:var(--no)}
+  @media (max-width:979px){.face{width:23px;height:23px;font-size:10px}}
+
+  /* ---------- feuille de détail ---------- */
+  .overlay{position:fixed;inset:0;z-index:20;display:flex;align-items:flex-end;justify-content:center;
+    background:rgba(4,6,18,.55);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
+    opacity:0;pointer-events:none;transition:opacity .2s}
+  .overlay.open{opacity:1;pointer-events:auto}
+  .overlay.center{align-items:center;padding:20px}
+  @media (min-width:700px){.overlay{align-items:center;padding:20px}}
+  .sheet{width:100%;max-width:460px;max-height:92vh;overflow:auto;padding:20px;border-radius:28px 28px 0 0;
+    background:linear-gradient(135deg,rgba(255,255,255,.2),rgba(255,255,255,.06)),rgba(18,22,50,.62);
+    transform:translateY(24px);transition:transform .25s cubic-bezier(.2,.9,.3,1);
+    padding-bottom:calc(20px + env(safe-area-inset-bottom))}
+  @media (min-width:700px){.sheet{border-radius:28px}}
+  .overlay.center .sheet{border-radius:28px}
+  .overlay.open .sheet{transform:none}
+  .sheet > *{position:relative;z-index:1}
+  .sheet-title{font-size:1.25rem;font-weight:800;letter-spacing:-.02em;padding-right:36px}
+  .sheet-sub{color:var(--muted);font-size:.88rem;margin-bottom:16px}
+  .x{position:absolute!important;right:14px;top:14px;width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:rgba(255,255,255,.1)}
+  .choices{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+  .choice{display:flex;flex-direction:column;align-items:center;gap:2px;padding:12px 4px;border-radius:16px;
+    background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);font-size:.85rem;transition:all .15s}
+  .choice span{font-size:1.3rem}
+  .choice:hover{background:rgba(255,255,255,.15)}
+  .choice:active{transform:scale(.97)}
+  .choice.on.yes{background:rgba(52,224,138,.28);border-color:var(--yes);font-weight:700}
+  .choice.on.maybe{background:rgba(255,194,71,.28);border-color:var(--maybe);font-weight:700}
+  .choice.on.no{background:rgba(255,90,106,.28);border-color:var(--no);font-weight:700}
+  .field{width:100%;padding:12px 14px;border-radius:14px;color:var(--text);font:inherit;font-size:.92rem;
+    background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);margin-bottom:10px}
+  .field:focus{outline:none;border-color:var(--accent);background:rgba(255,255,255,.12)}
+  .field::placeholder{color:var(--muted)}
+  .allday{display:flex;align-items:center;gap:10px;font-size:.88rem;color:var(--muted);margin-bottom:16px;cursor:pointer}
+  .allday input{width:18px;height:18px;accent-color:var(--accent)}
+  .grp{margin-top:12px}
+  .grp-t{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:6px}
+  .grp-t.yes{color:var(--yes)} .grp-t.maybe{color:var(--maybe)} .grp-t.no{color:var(--no)} .grp-t.none{color:var(--muted)}
+  .row{display:flex;align-items:center;gap:10px;padding:5px 0}
+  .row .nm{font-weight:600}
+  .row .why{color:var(--muted);font-size:.85rem;font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .link{background:none;border:0;color:var(--muted);font-size:.85rem;margin-top:16px;text-decoration:underline}
+  .primary{width:100%;border:0;padding:13px;border-radius:14px;font-weight:700;color:#0b0e2a;
+    background:linear-gradient(135deg,#a3adff,#5ee7ff)}
+  #nickBox{display:flex;flex-direction:column;gap:12px}
+  #nickBox p{color:var(--muted);font-size:.9rem}
+
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
+<div class="bg"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div>
+
 <div class="wrap">
   <header>
-    <h1 id="title">Dispo <span>Squad</span></h1>
-    <div class="me" id="me" title="Changer de pseudo"></div>
+    <h1 id="title">NSK Squad <span>Planning</span></h1>
+    <div class="mychip glass" id="me" title="Changer de pseudo"></div>
   </header>
   <div id="banner"></div>
-  <div class="legend">
-    <span>✅ Je suis dispo</span><span>🤔 Peut-être</span><span>❌ Pas dispo</span>
-    <span>🔥 = le meilleur soir</span>
+
+  <div id="hero"></div>
+
+  <div class="toolbar">
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <div class="nav glass">
+        <button id="prev" aria-label="Semaine précédente">‹</button>
+        <div class="lbl" id="weekLbl"></div>
+        <button id="next" aria-label="Semaine suivante">›</button>
+      </div>
+      <button class="today-btn" id="todayBtn">Aujourd'hui</button>
+    </div>
+    <div class="legend">
+      <span><i class="face yes" style="--c:#6b7bff"></i>Dispo</span>
+      <span><i class="face maybe" style="--c:#6b7bff"></i>Peut-être</span>
+      <span><i class="face no" style="--c:#6b7bff"></i>Absent</span>
+      <span><i class="face none"></i>Sans réponse</span>
+    </div>
   </div>
-  <main id="app"></main>
+
+  <main id="app"><div class="banner">Chargement…</div></main>
 </div>
 
-<div class="modal" id="modal">
-  <form class="box" id="form">
-    <h2>C'est quoi ton pseudo ?</h2>
-    <p>Utilise toujours le même pour que tes potes te reconnaissent.</p>
-    <input id="nick" maxlength="20" placeholder="Ton pseudo" autocomplete="off" required>
-    <button class="primary" type="submit">C'est parti</button>
-    <button class="link" type="button" id="cancel" style="display:none">Annuler</button>
+<!-- feuille créneau -->
+<div class="overlay" id="sheetWrap">
+  <div class="sheet glass" id="sheet">
+    <button class="x" id="sheetClose" aria-label="Fermer">✕</button>
+    <div class="sheet-title" id="sheetTitle"></div>
+    <div class="sheet-sub" id="sheetSub"></div>
+    <div class="choices">
+      <button class="choice yes" data-st="yes"><span>✅</span>Dispo</button>
+      <button class="choice maybe" data-st="maybe"><span>🤔</span>Peut-être</button>
+      <button class="choice no" data-st="no"><span>❌</span>Pas dispo</button>
+    </div>
+    <input class="field" id="note" maxlength="40" placeholder="Une raison ? (ex : j'ai foot, avec madame…)" autocomplete="off">
+    <label class="allday"><input type="checkbox" id="allday"> Appliquer aux 3 créneaux de la journée</label>
+    <div id="sheetList"></div>
+    <input class="field" id="game" maxlength="40" placeholder="🎮 On joue à quoi ce jour-là ?" autocomplete="off" style="margin-top:18px">
+    <button class="link" id="clear" type="button">Retirer ma réponse</button>
+  </div>
+</div>
+
+<!-- pseudo -->
+<div class="overlay center" id="modal">
+  <form class="sheet glass" id="form" style="max-width:360px">
+    <div id="nickBox">
+      <div class="sheet-title">C'est quoi ton pseudo ?</div>
+      <p>Utilise toujours le même pour que tes potes te reconnaissent.</p>
+      <input class="field" id="nick" maxlength="20" placeholder="Ton pseudo" autocomplete="off" required style="margin:0">
+      <button class="primary" type="submit">C'est parti</button>
+      <button class="link" type="button" id="cancel" style="display:none;margin:0">Annuler</button>
+    </div>
   </form>
 </div>
 
@@ -94,23 +244,43 @@
 (() => {
   const cfg = window.DISPO_CONFIG || {};
   const remote = !!(cfg.SUPABASE_URL && cfg.SUPABASE_ANON_KEY && !cfg.SUPABASE_URL.includes("XXXX") && window.supabase);
-  const DAYS_SHOWN = 14;
   const $ = s => document.querySelector(s);
   const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
+  const SLOTS = [
+    { id: "morning",   short: "Matin",  label: "Matin",      hint: "avant 12h",       icon: "🌅" },
+    { id: "afternoon", short: "Aprèm",  label: "Après-midi", hint: "12h – 18h",       icon: "☀️" },
+    { id: "evening",   short: "Soirée", label: "Soirée",     hint: "à partir de 18h", icon: "🌙" },
+  ];
+  const SLOT_IDS = SLOTS.map(s => s.id);
+  const ORDER = { yes: 0, maybe: 1, no: 2, none: 3 };
+  const MAX_WEEKS = 8;
+
   if (cfg.TITLE) {
     document.title = cfg.TITLE;
-    const parts = cfg.TITLE.split(" ");
-    const last = parts.pop();
+    const parts = cfg.TITLE.split(" "); const last = parts.pop();
     $("#title").innerHTML = (parts.length ? esc(parts.join(" ")) + " " : "") + "<span>" + esc(last) + "</span>";
   }
 
+  // ---------- dates ----------
+  const pad = n => String(n).padStart(2, "0");
+  const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const parse = s => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
+  const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+  const today0 = () => { const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate()); };
+  const startOfWeek = d => { const x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x; };
+  const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+  const fr = (d, o) => d.toLocaleDateString("fr-FR", o);
+
   // ---------- état ----------
   let me = localStorage.getItem("dispo_nick") || "";
-  let avails = [];          // {day, player, status}
-  let games = {};           // day -> game
-  const ymd = d => d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
-  const todayStr = () => ymd(new Date());
+  let avails = [];   // {day, player, slot, status, note}
+  let games = {};    // day -> jeu
+  let weekOffset = 0;
+  let sheet = null;  // {day, slot}
+  let pending = null;
+  let idx = {}, roster = [];
+  let inflight = 0;
 
   // ---------- stockage ----------
   let sb = null;
@@ -118,26 +288,29 @@
 
   const store = {
     async load() {
-      const since = todayStr();
+      const since = ymd(startOfWeek(today0()));
       if (remote) {
         const [a, g] = await Promise.all([
-          sb.from("availabilities").select("day,player,status").gte("day", since),
+          sb.from("availabilities").select("day,player,slot,status,note").gte("day", since),
           sb.from("day_games").select("day,game").gte("day", since),
         ]);
         if (a.error) throw a.error;
         if (g.error) throw g.error;
-        avails = a.data;
+        avails = a.data.map(r => ({ ...r, slot: r.slot || "evening", note: r.note || "" }));
         games = Object.fromEntries(g.data.map(r => [r.day, r.game]));
       } else {
-        avails = JSON.parse(localStorage.getItem("dispo_local_avails") || "[]").filter(r => r.day >= since);
+        avails = JSON.parse(localStorage.getItem("dispo_local_avails") || "[]")
+          .filter(r => r.day >= since).map(r => ({ ...r, slot: r.slot || "evening", note: r.note || "" }));
         games = JSON.parse(localStorage.getItem("dispo_local_games") || "{}");
       }
     },
-    async setStatus(day, player, status) {
+    async setMine(day, player, slots, status, note) {
       if (remote) {
         const r = status
-          ? await sb.from("availabilities").upsert({ day, player, status }, { onConflict: "day,player" })
-          : await sb.from("availabilities").delete().eq("day", day).eq("player", player);
+          ? await sb.from("availabilities").upsert(
+              slots.map(slot => ({ day, player, slot, status, note: note || null })),
+              { onConflict: "day,player,slot" })
+          : await sb.from("availabilities").delete().eq("day", day).eq("player", player).in("slot", slots);
         if (r.error) throw r.error;
       } else {
         localStorage.setItem("dispo_local_avails", JSON.stringify(avails));
@@ -155,139 +328,255 @@
     },
   };
 
-  // ---------- helpers affichage ----------
-  const COLORS = ["#e5535d","#f08a3c","#e0b020","#4cb86b","#27a6a0","#3f8fe0","#7c8cff","#a96ae0","#d95fa8"];
-  const colorOf = n => { let h = 0; for (const c of n) h = (h*31 + c.charCodeAt(0)) >>> 0; return COLORS[h % COLORS.length]; };
-  const avatar = n => `<span class="avatar" style="background:${colorOf(n)}">${esc(n.slice(0,1).toUpperCase())}</span>`;
-  const fmtDay = d => d.toLocaleDateString("fr-FR", { weekday: "long" });
-  const fmtSub = d => d.toLocaleDateString("fr-FR", { day: "numeric", month: "long" });
+  // ---------- helpers ----------
+  const COLORS = ["#e5535d","#f08a3c","#d9a514","#3fb868","#1fa5a0","#3f8fe0","#6b7bff","#a96ae0","#d95fa8"];
+  const colorOf = n => { let h = 0; for (const c of n) h = (h * 31 + c.charCodeAt(0)) >>> 0; return COLORS[h % COLORS.length]; };
+  const letter = n => esc((Array.from(n)[0] || "?").toUpperCase());
+  const STATUS_LABEL = { yes: "Dispo", maybe: "Peut-être", no: "Pas dispo", none: "Sans réponse" };
 
-  function weekLabel(d, i) {
-    const monday = new Date(d); monday.setDate(d.getDate() - ((d.getDay() + 6) % 7));
-    const t = new Date(); t.setHours(0,0,0,0);
-    const tMon = new Date(t); tMon.setDate(t.getDate() - ((t.getDay() + 6) % 7));
-    const diff = Math.round((monday - tMon) / (7*864e5));
-    if (diff === 0) return "Cette semaine";
-    if (diff === 1) return "Semaine prochaine";
-    return "Semaine du " + fmtSub(monday);
+  function buildIndex() {
+    idx = {};
+    for (const a of avails) (idx[a.day + "|" + a.slot] ||= []).push(a);
+    const names = new Set(avails.map(a => a.player));
+    if (me) names.add(me);
+    roster = [...names].sort((a, b) => a.localeCompare(b, "fr", { sensitivity: "base" }));
+  }
+  const getMine = (day, slot) => (idx[day + "|" + slot] || []).find(r => r.player === me);
+
+  function slotInfo(day, slot) {
+    const rows = idx[day + "|" + slot] || [];
+    const map = new Map(rows.map(r => [r.player, r]));
+    const faces = roster.map(p => {
+      const r = map.get(p);
+      return { player: p, status: r ? r.status : "none", note: r ? r.note : "" };
+    }).sort((a, b) => ORDER[a.status] - ORDER[b.status] || a.player.localeCompare(b.player, "fr"));
+    const c = { yes: 0, maybe: 0, no: 0, none: 0 };
+    faces.forEach(f => c[f.status]++);
+    return { faces, c };
+  }
+
+  const faceHtml = (f, extra = "") => {
+    const t = `${f.player} · ${STATUS_LABEL[f.status]}${f.note ? " — " + f.note : ""}`;
+    return `<span class="face ${f.status}${f.note ? " has-note" : ""}${f.player === me ? " me" : ""} ${extra}" style="--c:${colorOf(f.player)}" title="${esc(t)}">${letter(f.player)}</span>`;
+  };
+
+  function computeBest() {
+    const t = ymd(today0());
+    const keys = Object.keys(idx).filter(k => k.split("|")[0] >= t).sort((a, b) => {
+      const [da, sa] = a.split("|"), [db, sb2] = b.split("|");
+      return da < db ? -1 : da > db ? 1 : SLOT_IDS.indexOf(sa) - SLOT_IDS.indexOf(sb2);
+    });
+    let max = 0;
+    keys.forEach(k => { const y = idx[k].filter(r => r.status === "yes").length; if (y > max) max = y; });
+    if (max < 2) return { max: 0, keys: [] };
+    return { max, keys: keys.filter(k => idx[k].filter(r => r.status === "yes").length === max) };
   }
 
   // ---------- rendu ----------
   function render() {
-    const me$ = $("#me");
-    me$.innerHTML = me ? `${avatar(me)}<span>${esc(me)}</span><span style="color:var(--muted)">✎</span>` : "Choisir un pseudo";
+    buildIndex();
 
+    $("#me").innerHTML = me
+      ? `<span class="face big" style="--c:${colorOf(me)}">${letter(me)}</span><span style="position:relative;z-index:1">${esc(me)}</span><span style="color:var(--muted);position:relative;z-index:1">✎</span>`
+      : `<span style="position:relative;z-index:1;padding:4px 6px">Choisir un pseudo</span>`;
     $("#banner").innerHTML = remote ? "" :
-      `<div class="banner">Mode local : tes dispos restent sur ton navigateur. Suis le README pour activer le partage avec tes potes.</div>`;
+      `<div class="banner">Mode local : tes dispos restent sur ton navigateur. Renseigne config.js pour partager avec tes potes.</div>`;
 
-    const players = new Set(avails.map(a => a.player));
-    const days = [];
-    for (let i = 0; i < DAYS_SHOWN; i++) { const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate() + i); days.push(d); }
+    const best = computeBest();
+    const bestSet = new Set(best.keys);
 
-    const stats = days.map(d => {
-      const key = ymd(d);
-      const rows = avails.filter(a => a.day === key);
-      return { d, key, rows, yes: rows.filter(r => r.status === "yes").length, maybe: rows.filter(r => r.status === "maybe").length };
-    });
-    const maxYes = Math.max(0, ...stats.map(s => s.yes));
-    const bestKeys = new Set(maxYes >= 2 ? stats.filter(s => s.yes === maxYes).map(s => s.key) : []);
+    // hero
+    if (best.keys.length) {
+      const [day, slot] = best.keys[0].split("|");
+      const s = SLOTS.find(x => x.id === slot);
+      const info = slotInfo(day, slot);
+      const present = info.faces.filter(f => f.status === "yes");
+      const more = best.keys.length > 1 ? ` · +${best.keys.length - 1} autre${best.keys.length > 2 ? "s" : ""} créneau${best.keys.length > 2 ? "x" : ""} à égalité` : "";
+      $("#hero").innerHTML = `
+        <div class="hero glass good" data-day="${day}" data-slot="${slot}">
+          <div><small>🔥 Meilleur créneau à venir</small>
+            <h2>${esc(cap(fr(parse(day), { weekday: "long", day: "numeric", month: "long" })))} · ${s.icon} ${s.label}</h2>
+            <p>${info.c.yes} sur ${roster.length} dispo${info.c.maybe ? `, ${info.c.maybe} peut-être` : ""}${more}</p></div>
+          <div class="faces">${present.map(f => faceHtml(f, "big")).join("")}</div>
+        </div>`;
+    } else {
+      $("#hero").innerHTML = `
+        <div class="hero glass">
+          <div><small>Meilleur créneau</small>
+            <h2>Pas encore de créneau en commun</h2>
+            <p>Dès que 2 personnes sont dispo sur le même créneau, il s'affiche ici.</p></div>
+        </div>`;
+    }
 
-    let html = "", lastWeek = "";
-    stats.forEach((s, i) => {
-      const wl = weekLabel(s.d, i);
-      if (wl !== lastWeek) {
-        if (lastWeek) html += "</div>";
-        html += `<div class="week-title">${esc(wl)}</div><div class="grid">`;
-        lastWeek = wl;
-      }
-      const mine = (s.rows.find(r => r.player === me) || {}).status;
-      const everyone = s.yes >= 2 && s.yes === players.size;
-      const order = { yes: 0, maybe: 1, no: 2 };
-      const chips = [...s.rows].sort((a, b) => order[a.status] - order[b.status] || a.player.localeCompare(b.player))
-        .map(r => `<span class="chip ${r.status}">${avatar(r.player)}${esc(r.player)}${r.status === "maybe" ? " 🤔" : ""}</span>`).join("");
-      const badge = s.yes || s.maybe
-        ? `<span class="badge ${bestKeys.has(s.key) ? "good" : ""}">${bestKeys.has(s.key) ? "🔥 " : ""}${s.yes} dispo${s.maybe ? " · " + s.maybe + " peut-être" : ""}</span>`
-        : `<span class="badge">personne</span>`;
-      const label = i === 0 ? "Aujourd'hui" : i === 1 ? "Demain" : "";
+    // semaine
+    const start = addDays(startOfWeek(today0()), weekOffset * 7);
+    const end = addDays(start, 6);
+    $("#weekLbl").innerHTML = `<b>${start.getMonth() === end.getMonth()
+        ? `${start.getDate()} – ${end.getDate()} ${fr(end, { month: "long" })}`
+        : `${fr(start, { day: "numeric", month: "short" })} – ${fr(end, { day: "numeric", month: "short" })}`}</b>
+      <small>${weekOffset === 0 ? "Cette semaine" : weekOffset === 1 ? "Semaine prochaine" : "Dans " + weekOffset + " semaines"}</small>`;
+    $("#prev").disabled = weekOffset === 0;
+    $("#next").disabled = weekOffset >= MAX_WEEKS;
+
+    const t = ymd(today0());
+    let html = "";
+    for (let i = 0; i < 7; i++) {
+      const d = addDays(start, i), key = ymd(d);
       html += `
-      <div class="day ${i === 0 ? "today" : ""} ${bestKeys.has(s.key) ? "best" : ""}" data-day="${s.key}">
+      <section class="day glass${key === t ? " today" : ""}${key < t ? " past" : ""}" data-dayrow="${key}">
         <div class="day-head">
-          <div><div class="day-name">${esc(fmtDay(s.d))}</div><div class="day-sub">${esc(fmtSub(s.d))}${label ? " · " + label : ""}${everyone ? " · tout le monde 🎉" : ""}</div></div>
-          ${badge}
+          <span class="dow">${esc(fr(d, { weekday: "short" }).replace(".", ""))}</span>
+          <span class="dom">${d.getDate()}</span>
+          <span class="mon">${esc(fr(d, { month: "short" }).replace(".", ""))}</span>
+          ${games[key] ? `<span class="game-line">🎮 ${esc(games[key])}</span>` : ""}
         </div>
-        <div class="actions">
-          <button class="btn yes ${mine === "yes" ? "on" : ""}" data-act="yes">✅ Dispo</button>
-          <button class="btn maybe ${mine === "maybe" ? "on" : ""}" data-act="maybe">🤔 Peut-être</button>
-          <button class="btn no ${mine === "no" ? "on" : ""}" data-act="no">❌ Non</button>
+        <div class="slots">
+          ${SLOTS.map(s => {
+            const info = slotInfo(key, s.id), c = info.c, n = roster.length || 1;
+            const isBest = bestSet.has(key + "|" + s.id);
+            return `
+            <div class="slot${isBest ? " best" : ""}" tabindex="0" role="button" data-day="${key}" data-slot="${s.id}"
+                 aria-label="${esc(fr(d, { weekday: "long", day: "numeric", month: "long" }))} ${s.label}">
+              <div class="slot-top"><span class="sname">${s.short}</span><span class="count">${isBest ? "🔥 " : ""}${c.yes}/${roster.length}</span></div>
+              <div class="faces">${info.faces.map(f => faceHtml(f)).join("") || '<span class="sname">—</span>'}</div>
+              <div class="bar"><i class="y" style="width:${c.yes / n * 100}%"></i><i class="m" style="width:${c.maybe / n * 100}%"></i><i class="n" style="width:${c.no / n * 100}%"></i></div>
+            </div>`;
+          }).join("")}
         </div>
-        <div class="people">${chips || '<span class="empty">Personne n\'a répondu</span>'}</div>
-        <input class="game" maxlength="40" placeholder="🎮 On joue à quoi ?" value="${esc(games[s.key] || "")}">
-      </div>`;
-    });
-    html += "</div>";
-    $("#app").innerHTML = html;
+      </section>`;
+    }
+    $("#app").innerHTML = `<div class="week">${html}</div>`;
+
+    if (sheet) updateSheet();
   }
 
-  // ---------- actions ----------
-  let busy = false;
-  const safe = async fn => { try { await fn(); } catch (e) { console.error(e); alert("Oups, la sauvegarde a échoué. Réessaie dans un instant."); await refresh(true); } };
+  // ---------- feuille de détail ----------
+  function openSheet(day, slot) {
+    if (!me) { pending = { day, slot }; return openNick(); }
+    sheet = { day, slot };
+    const d = parse(day), s = SLOTS.find(x => x.id === slot);
+    $("#sheetTitle").textContent = cap(fr(d, { weekday: "long", day: "numeric", month: "long" }));
+    $("#sheetSub").textContent = `${s.icon} ${s.label} · ${s.hint}`;
+    const mine = getMine(day, slot);
+    $("#note").value = mine ? mine.note : "";
+    $("#game").value = games[day] || "";
+    $("#allday").checked = false;
+    updateSheet();
+    $("#sheetWrap").classList.add("open");
+  }
+  function closeSheet() {
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    sheet = null; $("#sheetWrap").classList.remove("open");
+  }
+  function updateSheet() {
+    if (!sheet) return;
+    const mine = getMine(sheet.day, sheet.slot);
+    document.querySelectorAll(".choice").forEach(b => b.classList.toggle("on", !!mine && mine.status === b.dataset.st));
+    $("#clear").style.display = mine ? "" : "none";
+    const info = slotInfo(sheet.day, sheet.slot);
+    const groups = [["yes", "Présents"], ["maybe", "Peut-être"], ["no", "Absents"], ["none", "Sans réponse"]];
+    $("#sheetList").innerHTML = groups.map(([k, title]) => {
+      const f = info.faces.filter(x => x.status === k);
+      if (!f.length) return "";
+      return `<div class="grp"><div class="grp-t ${k}">${title} · ${f.length}</div>${f.map(x =>
+        `<div class="row"><span class="face ${x.status}" style="--c:${colorOf(x.player)}">${letter(x.player)}</span>
+          <span class="nm">${esc(x.player)}</span>${x.note ? `<span class="why">${esc(x.note)}</span>` : ""}</div>`).join("")}</div>`;
+    }).join("");
+  }
 
-  $("#app").addEventListener("click", e => {
-    const btn = e.target.closest("[data-act]");
-    if (!btn) return;
-    if (!me) return openModal();
-    const day = btn.closest(".day").dataset.day;
-    const status = btn.dataset.act;
-    const existing = avails.find(a => a.day === day && a.player === me);
-    let next = status;
-    if (existing && existing.status === status) next = null; // re-clic = on retire
-    avails = avails.filter(a => !(a.day === day && a.player === me));
-    if (next) avails.push({ day, player: me, status: next });
+  async function setMine(day, slots, status, note) {
+    slots.forEach(s => {
+      avails = avails.filter(a => !(a.day === day && a.player === me && a.slot === s));
+      if (status) avails.push({ day, player: me, slot: s, status, note: note || "" });
+    });
     render();
-    safe(() => store.setStatus(day, me, next));
-  });
+    inflight++;
+    let failed = false;
+    try { await store.setMine(day, me, slots, status, note); }
+    catch (e) { failed = true; console.error(e); }
+    finally { inflight--; }
+    if (failed) {
+      alert("Oups, la sauvegarde a échoué. Vérifie ta connexion (et que migration-v2.sql a bien été lancé dans Supabase).");
+      await refresh(true);
+    }
+  }
+  function saveMine(status) {
+    if (!sheet) return;
+    const slots = $("#allday").checked ? SLOT_IDS : [sheet.slot];
+    const note = status ? $("#note").value.trim().slice(0, 40) : "";
+    setMine(sheet.day, slots, status, note);
+    if (!status) $("#note").value = "";
+  }
 
-  $("#app").addEventListener("change", e => {
-    if (!e.target.classList.contains("game")) return;
-    const day = e.target.closest(".day").dataset.day;
-    const val = e.target.value.trim();
-    if (val) games[day] = val; else delete games[day];
-    safe(() => store.setGame(day, val));
+  $("#sheet").addEventListener("click", e => {
+    const c = e.target.closest(".choice");
+    if (c) saveMine(c.dataset.st);
   });
+  $("#clear").addEventListener("click", () => saveMine(null));
+  $("#note").addEventListener("change", () => {
+    if (!sheet) return;
+    const mine = getMine(sheet.day, sheet.slot);
+    if (mine) saveMine(mine.status);
+  });
+  $("#game").addEventListener("change", async e => {
+    if (!sheet) return;
+    const val = e.target.value.trim(), day = sheet.day;
+    if (val) games[day] = val; else delete games[day];
+    render();
+    inflight++;
+    try { await store.setGame(day, val); } catch (err) { console.error(err); alert("Oups, impossible de sauvegarder le jeu."); }
+    finally { inflight--; }
+  });
+  $("#sheetClose").addEventListener("click", closeSheet);
+  $("#sheetWrap").addEventListener("click", e => { if (e.target.id === "sheetWrap") closeSheet(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") { closeSheet(); $("#modal").classList.remove("open"); } });
+
+  // ---------- interactions grille ----------
+  const openFrom = el => { const t = el.closest("[data-day][data-slot]"); if (t) openSheet(t.dataset.day, t.dataset.slot); };
+  $("#app").addEventListener("click", e => openFrom(e.target));
+  $("#app").addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openFrom(e.target); } });
+  $("#hero").addEventListener("click", e => openFrom(e.target));
+  $("#prev").addEventListener("click", () => { if (weekOffset > 0) { weekOffset--; render(); } });
+  $("#next").addEventListener("click", () => { if (weekOffset < MAX_WEEKS) { weekOffset++; render(); } });
+  $("#todayBtn").addEventListener("click", () => { weekOffset = 0; render(); });
 
   // ---------- pseudo ----------
   const modal = $("#modal"), nick = $("#nick");
-  function openModal() {
+  function openNick() {
     nick.value = me; modal.classList.add("open");
     $("#cancel").style.display = me ? "" : "none";
     setTimeout(() => nick.focus(), 50);
   }
-  $("#me").addEventListener("click", openModal);
+  $("#me").addEventListener("click", openNick);
   $("#cancel").addEventListener("click", () => modal.classList.remove("open"));
-  $("#form").addEventListener("submit", async e => {
+  $("#form").addEventListener("submit", e => {
     e.preventDefault();
     const v = nick.value.trim().slice(0, 20);
     if (!v) return;
     me = v; localStorage.setItem("dispo_nick", me);
     modal.classList.remove("open");
     render();
+    if (pending) { const p = pending; pending = null; openSheet(p.day, p.slot); }
   });
 
   // ---------- synchro ----------
   async function refresh(force) {
-    if (!force && document.activeElement && document.activeElement.classList.contains("game")) return;
+    if (!force && inflight > 0) return;
     try { await store.load(); render(); }
-    catch (e) { console.error(e); $("#banner").innerHTML = `<div class="banner">Impossible de joindre la base de données. Vérifie config.js et le README.</div>`; }
+    catch (e) {
+      console.error(e);
+      $("#banner").innerHTML = `<div class="banner">Impossible de lire la base. Vérifie config.js, et que migration-v2.sql a bien été lancé dans Supabase.</div>`;
+    }
   }
 
   (async () => {
     await refresh(true);
-    if (!me) openModal();
+    if (!me) openNick();
     if (remote) {
       sb.channel("dispo-live")
         .on("postgres_changes", { event: "*", schema: "public" }, () => refresh())
         .subscribe();
-      setInterval(refresh, 30000); // filet de sécurité si le temps réel saute
+      setInterval(refresh, 30000);
     }
     document.addEventListener("visibilitychange", () => { if (!document.hidden) refresh(); });
   })();
