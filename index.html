@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0f1115">
+<title>Dispo Squad</title>
+<style>
+  :root{
+    --bg:#0f1115; --card:#181b22; --card2:#1f232c; --line:#2a2f3a;
+    --text:#e8eaf0; --muted:#8b93a4;
+    --yes:#2ecc71; --maybe:#f5b83d; --no:#e5535d; --accent:#7c8cff;
+    --radius:16px;
+  }
+  @media (prefers-color-scheme: light){
+    :root{ --bg:#f4f5f8; --card:#fff; --card2:#f0f2f6; --line:#e1e4ec; --text:#171a21; --muted:#6a7285; }
+  }
+  *{box-sizing:border-box;margin:0}
+  body{background:var(--bg);color:var(--text);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100vh;padding-bottom:60px}
+  .wrap{max-width:980px;margin:0 auto;padding:0 16px}
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:22px 0 14px;flex-wrap:wrap}
+  h1{font-size:1.5rem;letter-spacing:-.02em}
+  h1 span{color:var(--accent)}
+  .me{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);padding:6px 8px 6px 6px;border-radius:999px;cursor:pointer;font-size:.9rem}
+  .me:hover{border-color:var(--accent)}
+  .avatar{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:.8rem;color:#fff;flex:none}
+  .banner{background:var(--card2);border:1px dashed var(--line);color:var(--muted);padding:10px 14px;border-radius:12px;font-size:.85rem;margin-bottom:14px}
+  .legend{display:flex;gap:14px;color:var(--muted);font-size:.85rem;margin:2px 0 16px;flex-wrap:wrap}
+  .week-title{font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:22px 0 10px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+  .day{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;display:flex;flex-direction:column;gap:12px;transition:border-color .2s, transform .2s}
+  .day.today{border-color:var(--accent)}
+  .day.best{border-color:var(--yes);box-shadow:0 0 0 1px var(--yes) inset, 0 6px 24px -10px var(--yes)}
+  .day.past{opacity:.5}
+  .day-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+  .day-name{font-weight:700;text-transform:capitalize}
+  .day-sub{font-size:.8rem;color:var(--muted)}
+  .badge{font-size:.78rem;padding:3px 9px;border-radius:999px;background:var(--card2);color:var(--muted);white-space:nowrap}
+  .badge.good{background:rgba(46,204,113,.15);color:var(--yes);font-weight:600}
+  .actions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .btn{border:1px solid var(--line);background:var(--card2);color:var(--text);padding:10px 6px;border-radius:12px;font:inherit;font-size:.85rem;cursor:pointer;transition:all .15s}
+  .btn:hover{border-color:var(--muted)}
+  .btn:active{transform:scale(.97)}
+  .btn.on.yes{background:var(--yes);border-color:var(--yes);color:#0b2a17;font-weight:700}
+  .btn.on.maybe{background:var(--maybe);border-color:var(--maybe);color:#2e2000;font-weight:700}
+  .btn.on.no{background:var(--no);border-color:var(--no);color:#fff;font-weight:700}
+  .people{display:flex;flex-wrap:wrap;gap:6px;min-height:28px}
+  .chip{display:flex;align-items:center;gap:5px;font-size:.8rem;padding:2px 9px 2px 3px;border-radius:999px;background:var(--card2);border:1px solid var(--line)}
+  .chip .avatar{width:20px;height:20px;font-size:.65rem}
+  .chip.yes{border-color:var(--yes)} .chip.maybe{border-color:var(--maybe);opacity:.9} .chip.no{opacity:.45;text-decoration:line-through}
+  .empty{color:var(--muted);font-size:.82rem;align-self:center}
+  .game{width:100%;background:transparent;border:1px solid var(--line);border-radius:10px;color:var(--text);padding:8px 10px;font:inherit;font-size:.85rem}
+  .game:focus{outline:none;border-color:var(--accent)}
+  .game::placeholder{color:var(--muted)}
+  /* modal */
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;place-items:center;padding:20px;z-index:10}
+  .modal.open{display:grid}
+  .box{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:24px;width:100%;max-width:360px;display:flex;flex-direction:column;gap:14px}
+  .box h2{font-size:1.2rem}
+  .box p{color:var(--muted);font-size:.9rem}
+  .box input{background:var(--card2);border:1px solid var(--line);border-radius:12px;color:var(--text);padding:12px 14px;font:inherit}
+  .box input:focus{outline:none;border-color:var(--accent)}
+  .primary{background:var(--accent);color:#fff;border:0;padding:12px;border-radius:12px;font:inherit;font-weight:700;cursor:pointer}
+  .link{background:none;border:0;color:var(--muted);cursor:pointer;font:inherit;font-size:.85rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1 id="title">Dispo <span>Squad</span></h1>
+    <div class="me" id="me" title="Changer de pseudo"></div>
+  </header>
+  <div id="banner"></div>
+  <div class="legend">
+    <span>✅ Je suis dispo</span><span>🤔 Peut-être</span><span>❌ Pas dispo</span>
+    <span>🔥 = le meilleur soir</span>
+  </div>
+  <main id="app"></main>
+</div>
+
+<div class="modal" id="modal">
+  <form class="box" id="form">
+    <h2>C'est quoi ton pseudo ?</h2>
+    <p>Utilise toujours le même pour que tes potes te reconnaissent.</p>
+    <input id="nick" maxlength="20" placeholder="Ton pseudo" autocomplete="off" required>
+    <button class="primary" type="submit">C'est parti</button>
+    <button class="link" type="button" id="cancel" style="display:none">Annuler</button>
+  </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script>
+(() => {
+  const cfg = window.DISPO_CONFIG || {};
+  const remote = !!(cfg.SUPABASE_URL && cfg.SUPABASE_ANON_KEY && !cfg.SUPABASE_URL.includes("XXXX") && window.supabase);
+  const DAYS_SHOWN = 14;
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+  if (cfg.TITLE) {
+    document.title = cfg.TITLE;
+    const parts = cfg.TITLE.split(" ");
+    const last = parts.pop();
+    $("#title").innerHTML = (parts.length ? esc(parts.join(" ")) + " " : "") + "<span>" + esc(last) + "</span>";
+  }
+
+  // ---------- état ----------
+  let me = localStorage.getItem("dispo_nick") || "";
+  let avails = [];          // {day, player, status}
+  let games = {};           // day -> game
+  const ymd = d => d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+  const todayStr = () => ymd(new Date());
+
+  // ---------- stockage ----------
+  let sb = null;
+  if (remote) sb = window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY);
+
+  const store = {
+    async load() {
+      const since = todayStr();
+      if (remote) {
+        const [a, g] = await Promise.all([
+          sb.from("availabilities").select("day,player,status").gte("day", since),
+          sb.from("day_games").select("day,game").gte("day", since),
+        ]);
+        if (a.error) throw a.error;
+        if (g.error) throw g.error;
+        avails = a.data;
+        games = Object.fromEntries(g.data.map(r => [r.day, r.game]));
+      } else {
+        avails = JSON.parse(localStorage.getItem("dispo_local_avails") || "[]").filter(r => r.day >= since);
+        games = JSON.parse(localStorage.getItem("dispo_local_games") || "{}");
+      }
+    },
+    async setStatus(day, player, status) {
+      if (remote) {
+        const r = status
+          ? await sb.from("availabilities").upsert({ day, player, status }, { onConflict: "day,player" })
+          : await sb.from("availabilities").delete().eq("day", day).eq("player", player);
+        if (r.error) throw r.error;
+      } else {
+        localStorage.setItem("dispo_local_avails", JSON.stringify(avails));
+      }
+    },
+    async setGame(day, game) {
+      if (remote) {
+        const r = game
+          ? await sb.from("day_games").upsert({ day, game }, { onConflict: "day" })
+          : await sb.from("day_games").delete().eq("day", day);
+        if (r.error) throw r.error;
+      } else {
+        localStorage.setItem("dispo_local_games", JSON.stringify(games));
+      }
+    },
+  };
+
+  // ---------- helpers affichage ----------
+  const COLORS = ["#e5535d","#f08a3c","#e0b020","#4cb86b","#27a6a0","#3f8fe0","#7c8cff","#a96ae0","#d95fa8"];
+  const colorOf = n => { let h = 0; for (const c of n) h = (h*31 + c.charCodeAt(0)) >>> 0; return COLORS[h % COLORS.length]; };
+  const avatar = n => `<span class="avatar" style="background:${colorOf(n)}">${esc(n.slice(0,1).toUpperCase())}</span>`;
+  const fmtDay = d => d.toLocaleDateString("fr-FR", { weekday: "long" });
+  const fmtSub = d => d.toLocaleDateString("fr-FR", { day: "numeric", month: "long" });
+
+  function weekLabel(d, i) {
+    const monday = new Date(d); monday.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+    const t = new Date(); t.setHours(0,0,0,0);
+    const tMon = new Date(t); tMon.setDate(t.getDate() - ((t.getDay() + 6) % 7));
+    const diff = Math.round((monday - tMon) / (7*864e5));
+    if (diff === 0) return "Cette semaine";
+    if (diff === 1) return "Semaine prochaine";
+    return "Semaine du " + fmtSub(monday);
+  }
+
+  // ---------- rendu ----------
+  function render() {
+    const me$ = $("#me");
+    me$.innerHTML = me ? `${avatar(me)}<span>${esc(me)}</span><span style="color:var(--muted)">✎</span>` : "Choisir un pseudo";
+
+    $("#banner").innerHTML = remote ? "" :
+      `<div class="banner">Mode local : tes dispos restent sur ton navigateur. Suis le README pour activer le partage avec tes potes.</div>`;
+
+    const players = new Set(avails.map(a => a.player));
+    const days = [];
+    for (let i = 0; i < DAYS_SHOWN; i++) { const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate() + i); days.push(d); }
+
+    const stats = days.map(d => {
+      const key = ymd(d);
+      const rows = avails.filter(a => a.day === key);
+      return { d, key, rows, yes: rows.filter(r => r.status === "yes").length, maybe: rows.filter(r => r.status === "maybe").length };
+    });
+    const maxYes = Math.max(0, ...stats.map(s => s.yes));
+    const bestKeys = new Set(maxYes >= 2 ? stats.filter(s => s.yes === maxYes).map(s => s.key) : []);
+
+    let html = "", lastWeek = "";
+    stats.forEach((s, i) => {
+      const wl = weekLabel(s.d, i);
+      if (wl !== lastWeek) {
+        if (lastWeek) html += "</div>";
+        html += `<div class="week-title">${esc(wl)}</div><div class="grid">`;
+        lastWeek = wl;
+      }
+      const mine = (s.rows.find(r => r.player === me) || {}).status;
+      const everyone = s.yes >= 2 && s.yes === players.size;
+      const order = { yes: 0, maybe: 1, no: 2 };
+      const chips = [...s.rows].sort((a, b) => order[a.status] - order[b.status] || a.player.localeCompare(b.player))
+        .map(r => `<span class="chip ${r.status}">${avatar(r.player)}${esc(r.player)}${r.status === "maybe" ? " 🤔" : ""}</span>`).join("");
+      const badge = s.yes || s.maybe
+        ? `<span class="badge ${bestKeys.has(s.key) ? "good" : ""}">${bestKeys.has(s.key) ? "🔥 " : ""}${s.yes} dispo${s.maybe ? " · " + s.maybe + " peut-être" : ""}</span>`
+        : `<span class="badge">personne</span>`;
+      const label = i === 0 ? "Aujourd'hui" : i === 1 ? "Demain" : "";
+      html += `
+      <div class="day ${i === 0 ? "today" : ""} ${bestKeys.has(s.key) ? "best" : ""}" data-day="${s.key}">
+        <div class="day-head">
+          <div><div class="day-name">${esc(fmtDay(s.d))}</div><div class="day-sub">${esc(fmtSub(s.d))}${label ? " · " + label : ""}${everyone ? " · tout le monde 🎉" : ""}</div></div>
+          ${badge}
+        </div>
+        <div class="actions">
+          <button class="btn yes ${mine === "yes" ? "on" : ""}" data-act="yes">✅ Dispo</button>
+          <button class="btn maybe ${mine === "maybe" ? "on" : ""}" data-act="maybe">🤔 Peut-être</button>
+          <button class="btn no ${mine === "no" ? "on" : ""}" data-act="no">❌ Non</button>
+        </div>
+        <div class="people">${chips || '<span class="empty">Personne n\'a répondu</span>'}</div>
+        <input class="game" maxlength="40" placeholder="🎮 On joue à quoi ?" value="${esc(games[s.key] || "")}">
+      </div>`;
+    });
+    html += "</div>";
+    $("#app").innerHTML = html;
+  }
+
+  // ---------- actions ----------
+  let busy = false;
+  const safe = async fn => { try { await fn(); } catch (e) { console.error(e); alert("Oups, la sauvegarde a échoué. Réessaie dans un instant."); await refresh(true); } };
+
+  $("#app").addEventListener("click", e => {
+    const btn = e.target.closest("[data-act]");
+    if (!btn) return;
+    if (!me) return openModal();
+    const day = btn.closest(".day").dataset.day;
+    const status = btn.dataset.act;
+    const existing = avails.find(a => a.day === day && a.player === me);
+    let next = status;
+    if (existing && existing.status === status) next = null; // re-clic = on retire
+    avails = avails.filter(a => !(a.day === day && a.player === me));
+    if (next) avails.push({ day, player: me, status: next });
+    render();
+    safe(() => store.setStatus(day, me, next));
+  });
+
+  $("#app").addEventListener("change", e => {
+    if (!e.target.classList.contains("game")) return;
+    const day = e.target.closest(".day").dataset.day;
+    const val = e.target.value.trim();
+    if (val) games[day] = val; else delete games[day];
+    safe(() => store.setGame(day, val));
+  });
+
+  // ---------- pseudo ----------
+  const modal = $("#modal"), nick = $("#nick");
+  function openModal() {
+    nick.value = me; modal.classList.add("open");
+    $("#cancel").style.display = me ? "" : "none";
+    setTimeout(() => nick.focus(), 50);
+  }
+  $("#me").addEventListener("click", openModal);
+  $("#cancel").addEventListener("click", () => modal.classList.remove("open"));
+  $("#form").addEventListener("submit", async e => {
+    e.preventDefault();
+    const v = nick.value.trim().slice(0, 20);
+    if (!v) return;
+    me = v; localStorage.setItem("dispo_nick", me);
+    modal.classList.remove("open");
+    render();
+  });
+
+  // ---------- synchro ----------
+  async function refresh(force) {
+    if (!force && document.activeElement && document.activeElement.classList.contains("game")) return;
+    try { await store.load(); render(); }
+    catch (e) { console.error(e); $("#banner").innerHTML = `<div class="banner">Impossible de joindre la base de données. Vérifie config.js et le README.</div>`; }
+  }
+
+  (async () => {
+    await refresh(true);
+    if (!me) openModal();
+    if (remote) {
+      sb.channel("dispo-live")
+        .on("postgres_changes", { event: "*", schema: "public" }, () => refresh())
+        .subscribe();
+      setInterval(refresh, 30000); // filet de sécurité si le temps réel saute
+    }
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) refresh(); });
+  })();
+})();
+</script>
+</body>
+</html>
