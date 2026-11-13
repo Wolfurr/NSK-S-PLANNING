@@ -192,6 +192,33 @@
     .pname{font-size:9px}
   }
 
+  /* ---------- réactions ---------- */
+  .rx{display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin-top:3px}
+  .rxchip,.rxpick,.rxadd{border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.07);border-radius:999px;font-size:.72rem;line-height:1;padding:3px 7px;display:inline-flex;align-items:center;gap:3px;color:var(--text)}
+  .rxchip span{font-size:.68rem;color:var(--muted)}
+  .rxchip.mine,.rxpick.mine{background:rgba(143,155,255,.3);border-color:rgba(143,155,255,.85)}
+  .rxchip:hover,.rxpick:hover,.rxadd:hover{background:rgba(255,255,255,.2)}
+  .rxpick{font-size:.92rem;padding:3px 6px}
+  .rxadd{opacity:.45;padding:3px 7px}
+  .cm:hover .rxadd,.rxadd:focus-visible{opacity:1}
+  @media (hover:none){.rxadd{opacity:.75}}
+
+  /* ---------- admin ---------- */
+  .iconbtn.admin-on{border-color:var(--yes);box-shadow:inset 0 1px 0 rgba(255,255,255,.38),0 0 18px rgba(52,224,138,.55),0 14px 40px -14px rgba(0,0,0,.65)}
+  .asbox{display:none;margin-bottom:12px}
+  body.is-admin .asbox{display:block}
+  .asbox .field{margin:0;border-color:rgba(52,224,138,.55)}
+  select.field option{background:#1b1f3a;color:#f4f6ff}
+  .arow{display:flex;align-items:center;gap:10px;padding:9px 2px;border-bottom:1px solid rgba(255,255,255,.08)}
+  .arow:last-child{border-bottom:0}
+  .arow .face{--fs:34px}
+  .arow .nm{flex:1;min-width:0;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .arow .nm small{display:block;font-weight:400;font-size:.74rem;color:var(--muted)}
+  .mini{border:1px solid var(--line);background:rgba(255,255,255,.1);padding:7px 11px;border-radius:10px;font-size:.8rem}
+  .mini:hover{background:rgba(255,255,255,.2)}
+  .mini.danger{border-color:rgba(255,90,106,.6);color:#ffb3bb}
+  .mini.danger:hover{background:rgba(255,90,106,.28)}
+
   /* ---------- fenêtres ---------- */
   .overlay{position:fixed;inset:0;z-index:20;display:flex;align-items:flex-end;justify-content:center;
     background:rgba(4,6,18,.55);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
@@ -277,6 +304,7 @@
       <span style="position:relative"><button class="pillbtn" id="jumpBtn" title="Aller à une date">📅</button><input class="vh" type="date" id="jump" tabindex="-1"></span>
     </div>
     <div class="hright">
+      <button class="iconbtn glass" id="adminBtn" type="button" title="Mode admin" aria-label="Mode admin" style="display:none"><span>🛡️</span></button>
       <div class="pop-wrap">
         <button class="iconbtn glass" id="themeBtn" title="Changer le fond" aria-label="Changer le fond"><span>🎨</span></button>
         <div class="pop glass" id="themePop"></div>
@@ -305,6 +333,7 @@
     <button class="x" id="sheetClose" type="button" aria-label="Fermer">✕</button>
     <div class="sheet-title" id="sheetTitle"></div>
     <div class="sheet-sub" id="sheetSub"></div>
+    <div class="asbox"><select class="field" id="asWho" aria-label="Modifier la réponse de"></select></div>
     <div class="choices">
       <button class="choice yes" data-st="yes" type="button"><span>✅</span>Dispo</button>
       <button class="choice maybe" data-st="maybe" type="button"><span>🤔</span>Peut-être</button>
@@ -337,6 +366,32 @@
       <button class="primary" type="submit">Enregistrer</button>
     </div>
   </form>
+</div>
+
+<!-- admin : mot de passe -->
+<div class="overlay center" id="adminLogin">
+  <form class="sheet glass" id="adminForm" style="max-width:360px">
+    <button class="x" id="adminLoginX" type="button" aria-label="Fermer">✕</button>
+    <div class="prof">
+      <div class="sheet-title">🛡️ Mode admin</div>
+      <p>Entre ton mot de passe admin pour modifier ou supprimer des joueurs.</p>
+      <input class="field" id="adminPw" type="password" placeholder="Mot de passe" autocomplete="current-password" required style="margin:0">
+      <div id="adminErr" style="color:var(--no);font-size:.85rem;min-height:1.2em"></div>
+      <button class="primary" type="submit" id="adminGo">Se connecter</button>
+    </div>
+  </form>
+</div>
+
+<!-- admin : joueurs -->
+<div class="overlay center" id="adminPanel">
+  <div class="sheet glass" style="max-width:460px">
+    <button class="x" id="adminPanelX" type="button" aria-label="Fermer">✕</button>
+    <div class="sheet-title">🛡️ Gérer les joueurs</div>
+    <div class="sheet-sub">Supprimer efface toutes ses réponses et sa photo. Pour modifier une réponse, ouvre un créneau : un menu te permet de choisir le joueur.</div>
+    <div id="adminList"></div>
+    <button class="link" id="adminOut" type="button">Quitter le mode admin</button>
+    <button class="link" id="adminForget" type="button" style="margin-left:16px">Cacher le bouton sur cet appareil</button>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -381,6 +436,8 @@
   let avails = [];   // {day, player, slot, status, note}
   let games = {};    // day -> jeu
   let profiles = {}; // pseudo -> photo (data URL)
+  let reactions = []; // {day, author, cid, reactor, emoji}
+  let pickerKey = null;
   let weekOffset = 0;
   let sheet = null;  // {day, slot}
   let pending = null;
@@ -398,10 +455,11 @@
     async load() {
       const since = ymd(startOfWeek(today0()));
       if (remote) {
-        const [a, g, p] = await Promise.all([
+        const [a, g, p, rx] = await Promise.all([
           sb.from("availabilities").select("day,player,slot,status,note").gte("day", since),
           sb.from("day_games").select("day,game").gte("day", since),
           sb.from("profiles").select("player,avatar"),
+          sb.from("reactions").select("day,author,cid,reactor,emoji").gte("day", since),
         ]);
         if (a.error) throw a.error;
         if (g.error) throw g.error;
@@ -409,12 +467,14 @@
         games = Object.fromEntries(g.data.map(r => [r.day, r.game]));
         profiles = {};
         if (!p.error) p.data.forEach(r => { if (validAvatar(r.avatar)) profiles[r.player] = r.avatar; });
+        reactions = rx.error ? [] : rx.data;
       } else {
         avails = JSON.parse(localStorage.getItem("dispo_local_avails") || "[]")
           .filter(r => r.day >= since).map(r => ({ ...r, slot: r.slot || "evening", note: r.note || "" }));
         games = JSON.parse(localStorage.getItem("dispo_local_games") || "{}");
         const lp = JSON.parse(localStorage.getItem("dispo_local_profiles") || "{}");
         profiles = {}; Object.keys(lp).forEach(k => { if (validAvatar(lp[k])) profiles[k] = lp[k]; });
+        reactions = JSON.parse(localStorage.getItem("dispo_local_reactions") || "[]").filter(r => r.day >= since);
       }
     },
     async setMine(day, player, slots, status, note) {
@@ -439,6 +499,16 @@
         localStorage.setItem("dispo_local_games", JSON.stringify(games));
       }
     },
+    async setReaction(row, on) {
+      if (remote) {
+        const r = on
+          ? await sb.from("reactions").upsert(row, { onConflict: "day,author,cid,reactor,emoji" })
+          : await sb.from("reactions").delete().eq("day", row.day).eq("author", row.author).eq("cid", row.cid).eq("reactor", row.reactor).eq("emoji", row.emoji);
+        if (r.error) throw r.error;
+      } else {
+        localStorage.setItem("dispo_local_reactions", JSON.stringify(reactions));
+      }
+    },
     async setAvatar(player, avatar) {
       if (remote) {
         const r = avatar
@@ -459,7 +529,7 @@
     if (me) names.add(me);
     roster = [...names].sort((a, b) => a.localeCompare(b, "fr", { sensitivity: "base" }));
   }
-  const getMine = (day, slot) => (idx[day + "|" + slot] || []).find(r => r.player === me);
+  const getMine = (day, slot) => (idx[day + "|" + slot] || []).find(r => r.player === who());
 
   function slotInfo(day, slot) {
     const rows = idx[day + "|" + slot] || [];
@@ -505,6 +575,37 @@
     keys.forEach(k => { const y = idx[k].filter(r => r.status === "yes").length; if (y > max) max = y; });
     if (max < 2) return { max: 0, keys: [] };
     return { max, keys: keys.filter(k => idx[k].filter(r => r.status === "yes").length === max) };
+  }
+
+  // ---------- réactions aux commentaires ----------
+  const REACTS = [["like", "👍"], ["heart", "❤️"], ["laugh", "😂"], ["eyes", "👀"]];
+  function rxHtml(day, c) {
+    const rows = reactions.filter(r => r.day === day && r.author === c.player && r.cid === c.note);
+    const dd = `data-rd="${day}" data-ra="${esc(c.player)}" data-rc="${esc(c.note)}"`;
+    const open = pickerKey === day + "|" + c.player + "|" + c.note;
+    const chips = REACTS.map(([code, em]) => {
+      const who = rows.filter(r => r.emoji === code).map(r => r.reactor);
+      return who.length ? `<button type="button" class="rxchip${who.includes(me) ? " mine" : ""}" ${dd} data-re="${code}" title="${esc(who.join(", "))}">${em}<span>${who.length}</span></button>` : "";
+    }).join("");
+    const picks = open ? REACTS.map(([code, em]) =>
+      `<button type="button" class="rxpick${rows.some(r => r.reactor === me && r.emoji === code) ? " mine" : ""}" ${dd} data-re="${code}" aria-label="${code}">${em}</button>`).join("") : "";
+    return `<div class="rx">${chips}${picks}<button type="button" class="rxadd" ${dd} data-rtoggle aria-label="Réagir" title="Réagir">${open ? "✕" : "☺"}</button></div>`;
+  }
+  async function toggleReaction(row) {
+    const same = r => r.day === row.day && r.author === row.author && r.cid === row.cid && r.reactor === row.reactor && r.emoji === row.emoji;
+    const on = !reactions.some(same);
+    reactions = reactions.filter(r => !same(r));
+    if (on) reactions.push(row);
+    render();
+    inflight++;
+    let failed = false;
+    try { await store.setReaction(row, on); }
+    catch (e) { failed = true; console.error(e); }
+    finally { inflight--; }
+    if (failed) {
+      alert("Oups, la réaction n'a pas pu être enregistrée. As-tu bien lancé migration-v5.sql dans Supabase ?");
+      await refresh(true);
+    }
   }
 
   // ---------- rendu ----------
@@ -583,7 +684,7 @@
           <div class="ctitle">💬 Commentaires</div>
           <div class="clist">${comments.length ? comments.map(c => `
             <div class="cm ${c.status}">${faceOnly(c.player)}
-              <div><b>${esc(c.player)}</b><i>${esc(c.label)}</i><p>${esc(c.note)}</p></div></div>`).join("")
+              <div><b>${esc(c.player)}</b><i>${esc(c.label)}</i><p>${esc(c.note)}</p>${rxHtml(key, c)}</div></div>`).join("")
             : '<span class="cempty">Aucun commentaire</span>'}</div>
         </div>
       </section>`;
@@ -591,12 +692,14 @@
     $("#app").innerHTML = `<div class="week">${html}</div>`;
 
     if (sheet) updateSheet();
+    if ($("#adminPanel").classList.contains("open")) renderAdmin();
   }
 
   // ---------- feuille de détail ----------
   function openSheet(day, slot) {
     if (!me) { pending = { day, slot }; return openProfile(); }
     sheet = { day, slot };
+    $("#asWho").innerHTML = "";
     const d = parse(day), s = SLOTS.find(x => x.id === slot);
     $("#sheetTitle").textContent = cap(fr(d, { weekday: "long", day: "numeric", month: "long" }));
     $("#sheetSub").textContent = `${s.icon} ${s.label} · ${s.hint}`;
@@ -611,8 +714,17 @@
     if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
     sheet = null; $("#sheetWrap").classList.remove("open");
   }
+  function fillAs() {
+    const box = $("#asWho");
+    if (!isAdmin()) { box.innerHTML = ""; return; }
+    const keep = box.value || me;
+    const names = [...new Set([...roster, me])].filter(Boolean);
+    box.innerHTML = names.map(n => `<option value="${esc(n)}"${n === keep ? " selected" : ""}>${n === me ? "Moi (" + esc(n) + ")" : "Modifier pour : " + esc(n)}</option>`).join("");
+  }
   function updateSheet() {
     if (!sheet) return;
+    fillAs();
+    $("#clear").textContent = who() === me ? "Retirer ma réponse" : "Retirer la réponse de " + who();
     const mine = getMine(sheet.day, sheet.slot);
     document.querySelectorAll(".choice").forEach(b => b.classList.toggle("on", !!mine && mine.status === b.dataset.st));
     $("#clear").style.display = mine ? "" : "none";
@@ -628,14 +740,15 @@
   }
 
   async function setMine(day, slots, status, note) {
+    const pl = who();
     slots.forEach(s => {
-      avails = avails.filter(a => !(a.day === day && a.player === me && a.slot === s));
-      if (status) avails.push({ day, player: me, slot: s, status, note: note || "" });
+      avails = avails.filter(a => !(a.day === day && a.player === pl && a.slot === s));
+      if (status) avails.push({ day, player: pl, slot: s, status, note: note || "" });
     });
     render();
     inflight++;
     let failed = false;
-    try { await store.setMine(day, me, slots, status, note); }
+    try { await store.setMine(day, pl, slots, status, note); }
     catch (e) { failed = true; console.error(e); }
     finally { inflight--; }
     if (failed) {
@@ -673,7 +786,7 @@
   $("#sheetClose").addEventListener("click", closeSheet);
   $("#sheetWrap").addEventListener("click", e => { if (e.target.id === "sheetWrap") closeSheet(); });
   document.addEventListener("keydown", e => {
-    if (e.key === "Escape") { closeSheet(); closeProfile(); $("#themePop").classList.remove("open"); }
+    if (e.key === "Escape") { closeSheet(); closeProfile(); $("#adminLogin").classList.remove("open"); $("#adminPanel").classList.remove("open"); $("#themePop").classList.remove("open"); }
   });
 
   // ---------- grille & navigation ----------
@@ -681,6 +794,18 @@
   $("#app").addEventListener("click", e => openFrom(e.target));
   $("#app").addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openFrom(e.target); } });
   $("#hero").addEventListener("click", e => openFrom(e.target));
+  // un clic n'importe où ailleurs referme le sélecteur de réactions
+  document.addEventListener("click", e => { if (pickerKey && !e.target.closest("[data-rd]")) { pickerKey = null; render(); } });
+  $("#app").addEventListener("click", e => {
+    const b = e.target.closest("[data-rd]");
+    if (!b) return;
+    const day = b.dataset.rd, author = b.dataset.ra, cid = b.dataset.rc;
+    const k = day + "|" + author + "|" + cid;
+    if (b.hasAttribute("data-rtoggle")) { pickerKey = pickerKey === k ? null : k; return render(); }
+    if (!me) return openProfile();
+    pickerKey = null;
+    toggleReaction({ day, author, cid, reactor: me, emoji: b.dataset.re });
+  });
   $("#prev").addEventListener("click", () => { if (weekOffset > 0) { weekOffset--; render(); } });
   $("#next").addEventListener("click", () => { if (weekOffset < MAX_WEEKS) { weekOffset++; render(); } });
   $("#todayBtn").addEventListener("click", () => { weekOffset = 0; render(); });
@@ -805,6 +930,106 @@
   $("#themeBtn").addEventListener("click", e => { e.stopPropagation(); $("#themePop").classList.toggle("open"); });
   document.addEventListener("click", e => { if (!e.target.closest(".pop-wrap")) $("#themePop").classList.remove("open"); });
 
+  // ---------- admin (mot de passe vérifié côté Supabase) ----------
+  let adminPw = "";
+  const isAdmin = () => !!adminPw;
+  const who = () => (isAdmin() && $("#asWho").value) || me;
+  const rpc = async (fn, args) => { const r = await sb.rpc(fn, args); if (r.error) throw r.error; return r.data; };
+
+  function setAdmin(pw) {
+    adminPw = pw || "";
+    try { adminPw ? sessionStorage.setItem("dispo_admin", adminPw) : sessionStorage.removeItem("dispo_admin"); } catch (e) {}
+    document.body.classList.toggle("is-admin", !!adminPw);
+    $("#adminBtn").classList.toggle("admin-on", !!adminPw);
+    $("#adminBtn").title = adminPw ? "Gérer les joueurs (admin)" : "Mode admin";
+    syncAdminBtn();
+    if (sheet) updateSheet();
+  }
+  const closeAdmin = () => { $("#adminLogin").classList.remove("open"); $("#adminPanel").classList.remove("open"); };
+
+  function adminPlayers() {
+    const names = new Set(avails.map(a => a.player));
+    Object.keys(profiles).forEach(n => names.add(n));
+    return [...names].sort((a, b) => a.localeCompare(b, "fr", { sensitivity: "base" }));
+  }
+  function renderAdmin() {
+    const list = adminPlayers();
+    $("#adminList").innerHTML = list.length ? list.map(n => {
+      const c = avails.filter(a => a.player === n).length;
+      return `<div class="arow">${faceOnly(n)}<div class="nm">${esc(n)}<small>${c} réponse${c > 1 ? "s" : ""} à venir</small></div>
+        <button class="mini" type="button" data-rename="${esc(n)}">Renommer</button>
+        <button class="mini danger" type="button" data-del="${esc(n)}">Supprimer</button></div>`;
+    }).join("") : '<p class="cempty" style="padding:10px 0">Aucun joueur pour le moment.</p>';
+  }
+  function openAdminPanel() { renderAdmin(); $("#adminPanel").classList.add("open"); }
+
+  // Le bouton 🛡️ n'apparaît que sur l'appareil de l'admin (déjà connecté une fois).
+  // Accès caché pour les autres : ajouter #admin à l'adresse, ou cliquer 5 fois vite sur le titre.
+  const deviceFlag = () => { try { return localStorage.getItem("dispo_admin_device") === "1"; } catch (e) { return false; } };
+  const setDeviceFlag = on => { try { on ? localStorage.setItem("dispo_admin_device", "1") : localStorage.removeItem("dispo_admin_device"); } catch (e) {} };
+  function syncAdminBtn() { $("#adminBtn").style.display = remote && (isAdmin() || deviceFlag()) ? "" : "none"; }
+  function openAdminLogin() {
+    $("#adminPw").value = ""; $("#adminErr").textContent = "";
+    $("#adminLogin").classList.add("open");
+    setTimeout(() => $("#adminPw").focus(), 50);
+  }
+  const wantAdmin = () => { if (!remote) return; isAdmin() ? openAdminPanel() : openAdminLogin(); };
+  syncAdminBtn();
+  $("#adminBtn").addEventListener("click", wantAdmin);
+  window.addEventListener("hashchange", () => { if (location.hash === "#admin") wantAdmin(); });
+  (() => {
+    let n = 0, t = 0;
+    $("#title").addEventListener("click", () => { const now = Date.now(); n = now - t < 800 ? n + 1 : 1; t = now; if (n >= 5) { n = 0; wantAdmin(); } });
+  })();
+  $("#adminLoginX").addEventListener("click", closeAdmin);
+  $("#adminLogin").addEventListener("click", e => { if (e.target.id === "adminLogin") closeAdmin(); });
+  $("#adminPanelX").addEventListener("click", closeAdmin);
+  $("#adminPanel").addEventListener("click", e => { if (e.target.id === "adminPanel") closeAdmin(); });
+  $("#adminOut").addEventListener("click", () => { setAdmin(""); closeAdmin(); });
+  $("#adminForget").addEventListener("click", () => { setDeviceFlag(false); setAdmin(""); closeAdmin(); });
+
+  $("#adminForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    const pw = $("#adminPw").value;
+    if (!pw) return;
+    const go = $("#adminGo"); go.disabled = true; $("#adminErr").textContent = "";
+    try {
+      if ((await rpc("admin_check", { pw })) === true) { setDeviceFlag(true); setAdmin(pw); closeAdmin(); openAdminPanel(); }
+      else $("#adminErr").textContent = "Mot de passe incorrect.";
+    } catch (err) {
+      console.error(err);
+      $("#adminErr").textContent = "Impossible de vérifier. As-tu bien lancé migration-v4.sql dans Supabase ?";
+    } finally { go.disabled = false; }
+  });
+
+  $("#adminList").addEventListener("click", async e => {
+    const d = e.target.closest("[data-del]"), r = e.target.closest("[data-rename]");
+    if (!d && !r) return;
+    try {
+      if (d) {
+        const n = d.dataset.del;
+        if (!confirm(`Supprimer ${n} ? Toutes ses réponses et sa photo seront effacées pour tout le monde.`)) return;
+        await rpc("admin_delete_player", { pw: adminPw, p: n });
+      } else {
+        const n = r.dataset.rename;
+        const v = (prompt(`Nouveau pseudo pour ${n} (si ce pseudo existe déjà, les deux sont fusionnés) :`, n) || "").trim().slice(0, 20);
+        if (!v || v === n) return;
+        await rpc("admin_rename_player", { pw: adminPw, old_name: n, new_name: v });
+      }
+      await refresh(true); renderAdmin();
+    } catch (err) {
+      console.error(err);
+      if (/incorrect/i.test(err.message || "")) { setAdmin(""); closeAdmin(); alert("Mot de passe admin refusé. Reconnecte-toi."); }
+      else alert("Action impossible. As-tu bien lancé migration-v4.sql dans Supabase ?");
+    }
+  });
+  $("#asWho").addEventListener("change", () => {
+    if (!sheet) return;
+    const mine = getMine(sheet.day, sheet.slot);
+    $("#note").value = mine ? mine.note : "";
+    updateSheet();
+  });
+
   // ---------- synchro ----------
   async function refresh(force) {
     if (!force && inflight > 0) return;
@@ -817,7 +1042,12 @@
 
   (async () => {
     await refresh(true);
+    try {
+      const saved = remote && sessionStorage.getItem("dispo_admin");
+      if (saved) setAdmin((await rpc("admin_check", { pw: saved })) === true ? saved : "");
+    } catch (e) { /* pas grave : on reste en mode normal */ }
     if (!me) openProfile();
+    if (location.hash === "#admin") wantAdmin();
     if (remote) {
       sb.channel("dispo-live")
         .on("postgres_changes", { event: "*", schema: "public" }, () => refresh())
